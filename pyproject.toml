@@ -24,7 +24,7 @@ dependencies = [
     # Configuration
     "pydantic-settings>=2.6.0",
     # Passwords
-    "passlib[bcrypt]>=1.7.4",
+    "bcrypt>=4.0.0",
     # Signed cookies
     "itsdangerous>=2.2.0",
     # Logging
