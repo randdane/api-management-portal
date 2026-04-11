@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}Tokens — API Portal{% endblock %}
+{% block content %}
+<div class="flex items-center justify-between mb-4">
+  <div>
+    <div class="page-title">API Tokens</div>
+    <div class="page-subtitle">Tokens are used to authenticate requests to the API gateway.</div>
+  </div>
+  <button
+    class="btn btn-primary"
+    data-on-click="$showCreate = !$showCreate"
+  >
+    + New Token
+  </button>
+</div>
+
+<div
+  data-signals='{"showCreate": false, "name": "", "expiresAt": ""}'
+  data-show="$showCreate"
+  class="card mb-4"
+>
+  <div style="font-weight:600;margin-bottom:16px">Create New Token</div>
+  <form
+    data-on-submit__prevent="@post('/api/tokens'); $showCreate = false; $name = ''; $expiresAt = ''"
+    data-indicator="createIndicator"
+  >
+    <div class="form-group">
+      <label class="form-label">Token Name</label>
+      <input
+        type="text"
+        class="form-input"
+        data-bind-name
+        placeholder="e.g. my-laptop, ci-pipeline"
+        required
+      >
+    </div>
+    <div class="form-group">
+      <label class="form-label">Expires At <span class="text-muted">(optional)</span></label>
+      <input
+        type="datetime-local"
+        class="form-input"
+        data-bind-expires-at
+      >
+    </div>
+    <div class="flex gap-2 mt-4">
+      <button type="submit" class="btn btn-primary" data-indicator="createIndicator">Create</button>
+      <button type="button" class="btn btn-outline" data-on-click="$showCreate = false">Cancel</button>
+    </div>
+  </form>
+</div>
+
+<div id="token-reveal-area"></div>
+
+<div id="token-list">
+  {% include "fragments/token_list.html" %}
+</div>
+{% endblock %}

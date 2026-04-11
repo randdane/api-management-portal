@@ -1,0 +1,67 @@
+{% if users %}
+<div class="table-wrap">
+  <table>
+    <thead>
+      <tr>
+        <th>Username</th>
+        <th>Email</th>
+        <th>Role</th>
+        <th>Status</th>
+        <th>Created</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for u in users %}
+      <tr id="user-row-{{ u.id }}">
+        <td style="font-weight:500">{{ u.username }}</td>
+        <td class="text-muted">{{ u.email }}</td>
+        <td><span class="badge badge-{{ u.role }}">{{ u.role }}</span></td>
+        <td>
+          {% if u.is_active %}
+            <span class="badge badge-ok">Active</span>
+          {% else %}
+            <span class="badge badge-revoked">Inactive</span>
+          {% endif %}
+        </td>
+        <td class="text-muted text-sm">{{ u.created_at.strftime('%Y-%m-%d') }}</td>
+        <td>
+          {% if u.id != user.id %}
+          <form
+            data-signals='{"role": "{{ u.role }}", "isActive": "{{ 'true' if u.is_active else 'false' }}"}'
+            data-on-submit__prevent="@put('/api/admin/users/{{ u.id }}')"
+            style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"
+          >
+            <select class="form-input" data-bind-role style="min-width:110px">
+              <option value="user" {% if u.role == 'user' %}selected{% endif %}>user</option>
+              <option value="admin" {% if u.role == 'admin' %}selected{% endif %}>admin</option>
+            </select>
+            <select class="form-input" data-bind-is-active style="min-width:120px">
+              <option value="true" {% if u.is_active %}selected{% endif %}>active</option>
+              <option value="false" {% if not u.is_active %}selected{% endif %}>inactive</option>
+            </select>
+            <button class="btn btn-outline btn-sm" type="submit">Save</button>
+            {% if u.is_active %}
+            <button
+              class="btn btn-danger btn-sm"
+              type="button"
+              data-on-click="confirm('Deactivate {{ u.username }}?') && @delete('/api/admin/users/{{ u.id }}')"
+            >
+              Deactivate
+            </button>
+            {% endif %}
+          </form>
+          {% else %}
+          <span class="text-muted text-sm">Current user</span>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<div class="card" style="text-align:center;padding:40px;color:var(--muted)">
+  No users found.
+</div>
+{% endif %}

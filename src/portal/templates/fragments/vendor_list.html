@@ -1,0 +1,42 @@
+{% if vendors %}
+<div class="table-wrap">
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Slug</th>
+        <th>Auth Type</th>
+        <th>Cache TTL</th>
+        <th>Rate Limit</th>
+        <th>Status</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for v in vendors %}
+      <tr>
+        <td style="font-weight:500">{{ v.name }}</td>
+        <td class="mono text-sm">{{ v.slug }}</td>
+        <td class="text-muted text-sm">{{ v.auth_type }}</td>
+        <td class="text-muted text-sm">{{ v.cache_ttl_seconds }}s</td>
+        <td class="text-muted text-sm">{{ v.rate_limit_rpm }} rpm</td>
+        <td>
+          {% if v.is_active %}
+            <span class="badge badge-ok">Active</span>
+          {% else %}
+            <span class="badge badge-revoked">Inactive</span>
+          {% endif %}
+        </td>
+        <td>
+          <a href="/vendors/{{ v.id }}" class="btn btn-outline btn-sm">Details</a>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<div class="card" style="text-align:center;padding:40px;color:var(--muted)">
+  No vendors configured. The gateway may be unreachable, or no vendors have been added yet.
+</div>
+{% endif %}

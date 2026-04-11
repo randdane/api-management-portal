@@ -1,0 +1,56 @@
+{% if tokens %}
+<div class="table-wrap">
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Prefix</th>
+        <th>Last Seen by Portal</th>
+        <th>Expires</th>
+        <th>Status</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for token in tokens %}
+      <tr id="token-row-{{ token.id }}">
+        <td style="font-weight:500">{{ token.name }}</td>
+        <td class="mono text-sm">{{ token.token_prefix }}…</td>
+        <td class="text-muted text-sm">
+          {% if token.last_used_at %}
+            {{ token.last_used_at.strftime('%Y-%m-%d %H:%M') }}
+            <span class="text-muted" title="Updated only on portal cache miss — active tokens may show an older time">ⓘ</span>
+          {% else %}
+            Never
+          {% endif %}
+        </td>
+        <td class="text-muted text-sm">
+          {% if token.expires_at %}{{ token.expires_at.strftime('%Y-%m-%d') }}{% else %}Never{% endif %}
+        </td>
+        <td>
+          {% if token.is_revoked %}
+            <span class="badge badge-revoked">Revoked</span>
+          {% else %}
+            <span class="badge badge-ok">Active</span>
+          {% endif %}
+        </td>
+        <td>
+          {% if not token.is_revoked %}
+          <button
+            class="btn btn-danger btn-sm"
+            data-on-click="confirm('Revoke this token? This cannot be undone.') && @delete('/api/tokens/{{ token.id }}?view=tokens')"
+          >
+            Revoke
+          </button>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<div class="card" style="text-align:center;padding:40px;color:var(--muted)">
+  No tokens yet. Create one to get started.
+</div>
+{% endif %}

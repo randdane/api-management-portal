@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}Users — API Portal{% endblock %}
+{% block content %}
+<div class="flex items-center justify-between mb-4">
+  <div>
+    <div class="page-title">User Management</div>
+    <div class="page-subtitle">Manage portal accounts and roles.</div>
+  </div>
+  <button class="btn btn-primary" data-on-click="$showCreate = !$showCreate">+ New User</button>
+</div>
+
+<div
+  data-signals='{"showCreate": false, "username": "", "email": "", "password": "", "role": "user"}'
+  data-show="$showCreate"
+  class="card mb-4"
+>
+  <div style="font-weight:600;margin-bottom:16px">Create User</div>
+  <form data-on-submit__prevent="@post('/api/admin/users'); $showCreate = false" data-indicator="createUserInd">
+    <div class="flex gap-4" style="flex-wrap:wrap">
+      <div class="form-group" style="flex:1;min-width:160px">
+        <label class="form-label">Username</label>
+        <input type="text" class="form-input" data-bind-username required>
+      </div>
+      <div class="form-group" style="flex:1;min-width:160px">
+        <label class="form-label">Email</label>
+        <input type="email" class="form-input" data-bind-email required>
+      </div>
+      <div class="form-group" style="flex:1;min-width:140px">
+        <label class="form-label">Password</label>
+        <input type="password" class="form-input" data-bind-password required>
+      </div>
+      <div class="form-group" style="min-width:120px">
+        <label class="form-label">Role</label>
+        <select class="form-input" data-bind-role>
+          <option value="user">user</option>
+          <option value="admin">admin</option>
+        </select>
+      </div>
+    </div>
+    <div class="flex gap-2">
+      <button type="submit" class="btn btn-primary" data-indicator="createUserInd">Create</button>
+      <button type="button" class="btn btn-outline" data-on-click="$showCreate = false">Cancel</button>
+    </div>
+  </form>
+</div>
+
+<div id="user-list">
+  {% include "fragments/user_list.html" %}
+</div>
+{% endblock %}

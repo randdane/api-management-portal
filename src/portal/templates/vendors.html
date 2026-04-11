@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}Vendors — API Portal{% endblock %}
+{% block content %}
+<div class="flex items-center justify-between mb-4">
+  <div>
+    <div class="page-title">Vendor Catalog</div>
+    <div class="page-subtitle">API vendors available through the gateway.</div>
+  </div>
+  {% if user.role == 'admin' %}
+  <a href="/admin/vendors" class="btn btn-outline">Manage Vendors</a>
+  {% endif %}
+</div>
+
+<div id="vendor-list">
+  {% include "fragments/vendor_list.html" %}
+</div>
+{% endblock %}

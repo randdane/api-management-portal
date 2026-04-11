@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}API Management Portal{% endblock %}</title>
+  <script type="module" src="https://cdn.jsdelivr.net/npm/@starfederation/datastar@1.0.0-RC.8/dist/datastar.js"></script>
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+  <div
+    data-signals='{"redirect": ""}'
+    data-effect="$redirect && (window.location.href = $redirect)"
+  ></div>
+  {% if user is defined %}
+  <nav class="nav">
+    <div class="nav-brand">API Portal</div>
+    <div class="nav-links">
+      <a href="/" class="nav-link">Dashboard</a>
+      <a href="/tokens" class="nav-link">Tokens</a>
+      <a href="/vendors" class="nav-link">Vendors</a>
+      {% if user.role == 'admin' %}
+      <a href="/admin/users" class="nav-link">Users</a>
+      <a href="/admin/audit-logs" class="nav-link">Audit Log</a>
+      {% endif %}
+      <form
+        action="/api/auth/logout"
+        method="post"
+        style="display:inline"
+        data-on-submit__prevent="@post('/api/auth/logout')"
+      >
+        <button type="submit" class="nav-link btn-link">Logout</button>
+      </form>
+    </div>
+  </nav>
+  {% endif %}
+
+  <div id="flash-area"></div>
+
+  <main class="main">
+    {% block content %}{% endblock %}
+  </main>
+
+  <script>
+  (function() {
+    const _origFetch = window.fetch;
+    window.fetch = function(url, options) {
+      options = options || {};
+      const method = (options.method || 'GET').toUpperCase();
+      if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(method)) {
+        const match = document.cookie.match('(?:^|; )csrf_token=([^;]*)');
+        if (match) {
+          options.headers = Object.assign(
+            {'X-CSRF-Token': decodeURIComponent(match[1])},
+            options.headers
+          );
+        }
+      }
+      return _origFetch.call(this, url, options);
+    };
+  })();
+  </script>
+</body>
+</html>

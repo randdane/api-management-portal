@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+{% block title %}{{ vendor.name }} — API Portal{% endblock %}
+{% block content %}
+<div class="mb-4">
+  <a href="/vendors" class="text-muted text-sm">&larr; Back to Vendors</a>
+</div>
+
+<div class="flex items-center justify-between mb-4">
+  <div>
+    <div class="page-title">{{ vendor.name }}</div>
+    <div class="page-subtitle">
+      <span class="mono">{{ vendor.slug }}</span> &middot;
+      {{ vendor.auth_type }} &middot;
+      {% if vendor.is_active %}
+        <span class="badge badge-ok">Active</span>
+      {% else %}
+        <span class="badge badge-revoked">Inactive</span>
+      {% endif %}
+    </div>
+  </div>
+  {% if user.role == 'admin' %}
+  <button
+    class="btn btn-danger btn-sm"
+    data-on-click="confirm('Deactivate {{ vendor.name }}?') && @delete('/api/vendors/{{ vendor.id }}?view=detail')"
+  >
+    Deactivate
+  </button>
+  {% endif %}
+</div>
+
+{% if user.role == 'admin' %}
+<div
+  data-signals='{"name": "{{ vendor.name }}", "slug": "{{ vendor.slug }}", "baseUrl": "{{ vendor.base_url }}", "authType": "{{ vendor.auth_type }}"}'
+  class="card"
+  style="margin-bottom:16px"
+>
+  <div style="font-weight:600;margin-bottom:12px">Edit Vendor</div>
+  <form data-on-submit__prevent="@put('/api/vendors/{{ vendor.id }}?view=detail')">
+    <div class="flex gap-4" style="flex-wrap:wrap">
+      <div class="form-group" style="flex:1;min-width:160px">
+        <label class="form-label">Name</label>
+        <input type="text" class="form-input" data-bind-name required>
+      </div>
+      <div class="form-group" style="flex:1;min-width:140px">
+        <label class="form-label">Slug</label>
+        <input type="text" class="form-input" data-bind-slug required>
+      </div>
+      <div class="form-group" style="flex:2;min-width:220px">
+        <label class="form-label">Base URL</label>
+        <input type="url" class="form-input" data-bind-base-url required>
+      </div>
+      <div class="form-group" style="min-width:120px">
+        <label class="form-label">Auth Type</label>
+        <select class="form-input" data-bind-auth-type>
+          <option value="key" {% if vendor.auth_type == 'key' %}selected{% endif %}>key</option>
+          <option value="oauth2" {% if vendor.auth_type == 'oauth2' %}selected{% endif %}>oauth2</option>
+          <option value="none" {% if vendor.auth_type == 'none' %}selected{% endif %}>none</option>
+        </select>
+      </div>
+    </div>
+    <button class="btn btn-primary" type="submit">Save Changes</button>
+  </form>
+</div>
+{% endif %}
+
+<div class="flex gap-4" style="flex-wrap:wrap;margin-bottom:16px">
+  <div class="card" style="flex:1;min-width:180px">
+    <div class="text-muted text-sm">Base URL</div>
+    <div class="mono text-sm mt-4" style="margin-top:4px;word-break:break-all">{{ vendor.base_url }}</div>
+  </div>
+  <div class="card" style="flex:1;min-width:140px">
+    <div class="text-muted text-sm">Cache TTL</div>
+    <div style="font-size:24px;font-weight:700;margin-top:4px">{{ vendor.cache_ttl_seconds }}<span class="text-muted text-sm">s</span></div>
+  </div>
+  <div class="card" style="flex:1;min-width:140px">
+    <div class="text-muted text-sm">Rate Limit</div>
+    <div style="font-size:24px;font-weight:700;margin-top:4px">{{ vendor.rate_limit_rpm }}<span class="text-muted text-sm"> rpm</span></div>
+  </div>
+  {% if quota %}
+  <div class="card" style="flex:1;min-width:140px">
+    <div class="text-muted text-sm">Quota Used</div>
+    <div style="font-size:24px;font-weight:700;margin-top:4px">
+      {{ quota.used or 0 }}<span class="text-muted text-sm"> / {{ quota.limit or '∞' }}</span>
+    </div>
+  </div>
+  {% endif %}
+</div>
+
+{% if vendor.endpoints %}
+<div class="card">
+  <div style="font-weight:600;margin-bottom:12px">Endpoints</div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Method</th>
+          <th>Path</th>
+          <th>Cache TTL</th>
+          <th>Async</th>
+          <th>Timeout</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for ep in vendor.endpoints %}
+        <tr>
+          <td><span class="badge badge-user mono">{{ ep.method }}</span></td>
+          <td class="mono text-sm">{{ ep.path }}</td>
+          <td class="text-muted text-sm">
+            {% if ep.cache_ttl_override is not none %}{{ ep.cache_ttl_override }}s{% else %}default{% endif %}
+          </td>
+          <td class="text-muted text-sm">{{ 'Yes' if ep.is_async_job else 'No' }}</td>
+          <td class="text-muted text-sm">{{ ep.timeout_seconds }}s</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% else %}
+<div class="card" style="text-align:center;padding:32px;color:var(--muted)">
+  No endpoints configured for this vendor.
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,49 @@
+{% if vendors %}
+<div class="table-wrap">
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Slug</th>
+        <th>Auth Type</th>
+        <th>Status</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for v in vendors %}
+      <tr {% if not v.is_active %}style="opacity:0.5"{% endif %}>
+        <td style="font-weight:500">{{ v.name }}</td>
+        <td class="mono text-sm">{{ v.slug }}</td>
+        <td class="text-muted text-sm">{{ v.auth_type }}</td>
+        <td>
+          {% if v.is_active %}
+            <span class="badge badge-ok">Active</span>
+          {% else %}
+            <span class="badge badge-revoked">Inactive</span>
+          {% endif %}
+        </td>
+        <td style="white-space:nowrap">
+          <a class="btn btn-outline btn-sm" href="/vendors/{{ v.id }}">Details</a>
+          {% if v.is_active %}
+          <button
+            class="btn btn-danger btn-sm"
+            data-on-click__prevent="confirm('Deactivate {{ v.name }}?') && @delete('/api/vendors/{{ v.id }}?view=admin')"
+          >Deactivate</button>
+          {% else %}
+          <button
+            class="btn btn-outline btn-sm"
+            data-on-click__prevent="confirm('Reactivate {{ v.name }}?') && @put('/api/vendors/{{ v.id }}/activate?view=admin')"
+          >Reactivate</button>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<div class="card" style="text-align:center;padding:40px;color:var(--muted)">
+  No vendors configured yet.
+</div>
+{% endif %}

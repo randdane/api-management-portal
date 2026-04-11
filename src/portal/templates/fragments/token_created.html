@@ -1,0 +1,12 @@
+<div id="token-reveal-area">
+  <div class="token-reveal">
+    <p>⚠ Copy your token now — it will not be shown again.</p>
+    <div class="token-value">{{ plain_token }}</div>
+    <button
+      class="btn btn-outline btn-sm mt-4"
+      onclick="navigator.clipboard.writeText('{{ plain_token }}').then(() => this.textContent = 'Copied!')"
+    >
+      Copy to clipboard
+    </button>
+  </div>
+</div>

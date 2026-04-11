@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Audit Log — API Portal{% endblock %}
+{% block content %}
+<div class="page-title">Audit Log</div>
+<div class="page-subtitle">All portal mutations, append-only.</div>
+
+<div
+  data-signals='{"actionFilter": "{{ action_filter }}"}'
+  class="card mb-4"
+  style="padding:16px"
+>
+  <div class="flex gap-2 items-center">
+    <input
+      type="text"
+      class="form-input"
+      placeholder="Filter by action (e.g. token.created)"
+      data-bind-action-filter
+      data-on-input__debounce.300ms="@get('/admin/audit-logs?action=' + $actionFilter)"
+      style="max-width:340px"
+    >
+    <span class="text-muted text-sm">{{ logs|length }} results</span>
+  </div>
+</div>
+
+<div id="audit-list">
+  {% include "fragments/audit_list.html" %}
+</div>
+{% endblock %}

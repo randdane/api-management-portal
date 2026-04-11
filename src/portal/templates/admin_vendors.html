@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}Manage Vendors — API Portal{% endblock %}
+{% block content %}
+<div class="flex items-center justify-between mb-4">
+  <div>
+    <div class="page-title">Manage Vendors</div>
+    <div class="page-subtitle">Create and manage vendor catalog entries.</div>
+  </div>
+  <button class="btn btn-primary" data-on-click="$showCreate = !$showCreate">+ New Vendor</button>
+</div>
+
+<div
+  data-signals='{"showCreate": false, "name": "", "slug": "", "baseUrl": "", "authType": "key"}'
+  data-show="$showCreate"
+  class="card mb-4"
+>
+  <div style="font-weight:600;margin-bottom:16px">Create Vendor</div>
+  <form data-on-submit__prevent="@post('/api/vendors'); $showCreate = false; $name = ''; $slug = ''; $baseUrl = ''; $authType = 'key'" data-indicator="createVendorInd">
+    <div class="flex gap-4" style="flex-wrap:wrap">
+      <div class="form-group" style="flex:1;min-width:160px">
+        <label class="form-label">Name</label>
+        <input type="text" class="form-input" data-bind-name required>
+      </div>
+      <div class="form-group" style="flex:1;min-width:140px">
+        <label class="form-label">Slug</label>
+        <input type="text" class="form-input" data-bind-slug required>
+      </div>
+      <div class="form-group" style="flex:2;min-width:200px">
+        <label class="form-label">Base URL</label>
+        <input type="url" class="form-input" data-bind-base-url required>
+      </div>
+      <div class="form-group" style="min-width:120px">
+        <label class="form-label">Auth Type</label>
+        <select class="form-input" data-bind-auth-type>
+          <option value="key">key</option>
+          <option value="oauth2">oauth2</option>
+          <option value="none">none</option>
+        </select>
+      </div>
+    </div>
+    <div class="flex gap-2">
+      <button type="submit" class="btn btn-primary" data-indicator="createVendorInd">Create</button>
+      <button type="button" class="btn btn-outline" data-on-click="$showCreate = false">Cancel</button>
+    </div>
+  </form>
+</div>
+
+<div id="vendor-admin-list">
+  {% include "fragments/admin_vendor_list.html" %}
+</div>
+{% endblock %}

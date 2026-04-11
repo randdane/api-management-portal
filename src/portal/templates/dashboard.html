@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — API Portal{% endblock %}
+{% block content %}
+<div class="flex items-center justify-between mb-4">
+  <div>
+    <div class="page-title">Welcome, {{ user.username }}</div>
+    <div class="page-subtitle">{{ user.email }} &middot; <span class="badge badge-{{ user.role }}">{{ user.role }}</span></div>
+  </div>
+</div>
+
+<div class="flex gap-4 mb-4" style="flex-wrap:wrap">
+  <div class="card" style="flex:1;min-width:200px">
+    <div class="text-muted text-sm">Active Tokens</div>
+    <div style="font-size:32px;font-weight:700;margin-top:4px">{{ active_token_count }}</div>
+    <a href="/tokens" class="text-sm" style="margin-top:8px;display:inline-block">Manage tokens &rarr;</a>
+  </div>
+  <div class="card" style="flex:1;min-width:200px">
+    <div class="text-muted text-sm">Total Tokens</div>
+    <div style="font-size:32px;font-weight:700;margin-top:4px">{{ total_token_count }}</div>
+  </div>
+  {% if user.role == 'admin' %}
+  <div class="card" style="flex:1;min-width:200px">
+    <div class="text-muted text-sm">Total Users</div>
+    <div style="font-size:32px;font-weight:700;margin-top:4px">{{ user_count }}</div>
+    <a href="/admin/users" class="text-sm" style="margin-top:8px;display:inline-block">Manage users &rarr;</a>
+  </div>
+  {% endif %}
+</div>
+
+{% if recent_logs %}
+<div class="card">
+  <div style="font-weight:600;margin-bottom:12px">Recent Activity</div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Action</th>
+          <th>Resource</th>
+          <th>When</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for log in recent_logs %}
+        <tr>
+          <td class="mono">{{ log.action }}</td>
+          <td class="text-muted">{{ log.resource_type }}{% if log.resource_id %} <span class="mono text-sm">{{ log.resource_id[:8] }}…</span>{% endif %}</td>
+          <td class="text-muted text-sm">{{ log.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+{% endblock %}
