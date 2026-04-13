@@ -23,7 +23,7 @@ services:
       - ./alembic:/app/alembic:ro
     # Run migrations then start the server
     command: >
-      sh -c "uv run alembic upgrade head && uv run uvicorn portal.main:app --host 0.0.0.0 --port 8001 --reload"
+      sh -c "alembic upgrade head && uvicorn portal.main:app --host 0.0.0.0 --port 8001 --reload"
 
   db:
     image: postgres:16-alpine
