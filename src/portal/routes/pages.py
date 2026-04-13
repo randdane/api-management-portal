@@ -22,7 +22,8 @@ from portal.auth import oauth2 as oauth2_lib
 from portal.auth.dependencies import get_current_user
 from portal.db.models import ApiToken, AuditLog, User
 from portal.db.session import get_db
-from portal.sse import is_datastar_request
+from portal.routes.tokens import get_user_tokens
+from portal.sse import is_datastar_request, merge_fragments
 
 router = APIRouter(tags=["pages"])
 
@@ -35,8 +36,9 @@ templates = Jinja2Templates(directory="src/portal/templates")
 @router.get("/login")
 async def login_page(request: Request):
     return templates.TemplateResponse(
-        "login.html",
-        {"request": request, "oauth2_enabled": oauth2_lib.is_configured()},
+        request=request,
+        name="login.html",
+        context={"oauth2_enabled": oauth2_lib.is_configured()},
     )
 
 
@@ -80,7 +82,7 @@ async def dashboard(
         "user_count": user_count,
         "recent_logs": recent_logs,
     }
-    return templates.TemplateResponse("dashboard.html", ctx)
+    return templates.TemplateResponse(request=request, name="dashboard.html", context=ctx)
 
 
 # ── Tokens page ────────────────────────────────────────────────────────────
@@ -92,12 +94,10 @@ async def tokens_page(
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    tokens = await _get_user_tokens(user, db)
+    tokens = await get_user_tokens(user, db)
     ctx = {"request": request, "user": user, "tokens": tokens}
 
     if is_datastar_request(request):
         html = templates.get_template("fragments/token_list.html").render(ctx)
-        from portal.sse import merge_fragments
-
         return merge_fragments(f'<div id="token-list">{html}</div>')
-    return templates.TemplateResponse("tokens.html", ctx)
+    return templates.TemplateResponse(request=request, name="tokens.html", context=ctx)

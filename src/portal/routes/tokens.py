@@ -4,6 +4,7 @@ import uuid
 from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -16,6 +17,7 @@ from portal.services.audit import log_action
 from portal.sse import is_datastar_request, merge_fragments
 
 router = APIRouter(prefix="/api/tokens", tags=["tokens"])
+templates = Jinja2Templates(directory="src/portal/templates")
 
 
 class TokenOut(BaseModel):
@@ -53,7 +55,7 @@ def _to_out(row: ApiToken) -> TokenOut:
     )
 
 
-async def _get_user_tokens(user: User, db: AsyncSession) -> list[ApiToken]:
+async def get_user_tokens(user: User, db: AsyncSession) -> list[ApiToken]:
     stmt = (
         select(ApiToken)
         .where(ApiToken.user_id == user.id)
@@ -69,11 +71,8 @@ async def list_tokens(
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> list[TokenOut] | object:
-    rows = await _get_user_tokens(user, db)
+    rows = await get_user_tokens(user, db)
     if is_datastar_request(request):
-        from fastapi.templating import Jinja2Templates
-
-        templates = Jinja2Templates(directory="src/portal/templates")
         html = templates.get_template("fragments/token_list.html").render(
             {"request": request, "user": user, "tokens": rows}
         )
@@ -124,10 +123,7 @@ async def create_token(
     await db.refresh(row)
 
     if is_datastar_request(request):
-        from fastapi.templating import Jinja2Templates
-
-        templates = Jinja2Templates(directory="src/portal/templates")
-        tokens = await _get_user_tokens(user, db)
+        tokens = await get_user_tokens(user, db)
         ctx = {"request": request, "user": user, "tokens": tokens, "plain_token": plain}
         reveal_html = templates.get_template("fragments/token_created.html").render(ctx)
         list_html = templates.get_template("fragments/token_list.html").render(ctx)
@@ -177,10 +173,7 @@ async def revoke_token(
     await db.commit()
 
     if is_datastar_request(request):
-        from fastapi.templating import Jinja2Templates
-
-        templates = Jinja2Templates(directory="src/portal/templates")
-        tokens = await _get_user_tokens(user, db)
+        tokens = await get_user_tokens(user, db)
         html = templates.get_template("fragments/token_list.html").render(
             {"request": request, "user": user, "tokens": tokens}
         )

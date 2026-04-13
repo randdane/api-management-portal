@@ -87,4 +87,6 @@ def template_or_fragment(
             {"request": request, **context}
         )
         return merge_fragments(html)
-    return templates.TemplateResponse(full_template, {"request": request, **context})
+    return templates.TemplateResponse(
+        request=request, name=full_template, context={"request": request, **context}
+    )
