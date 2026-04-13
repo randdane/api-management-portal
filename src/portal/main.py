@@ -47,6 +47,29 @@ async def lifespan(app: FastAPI):
 def create_app() -> FastAPI:
     configure_logging()
 
+    # Fail-fast if using default secrets outside development.
+    if settings.environment != "development":
+        insecure_secrets = []
+        if settings.secret_key == "dev-secret-change-me-in-production":
+            insecure_secrets.append("SECRET_KEY")
+        if (
+            settings.gateway_portal_shared_secret
+            == "dev-shared-secret-change-me-in-production"
+        ):
+            insecure_secrets.append("GATEWAY_PORTAL_SHARED_SECRET")
+
+        if insecure_secrets:
+            logger.critical(
+                "portal.insecure_configuration",
+                environment=settings.environment,
+                insecure_secrets=insecure_secrets,
+                error="Default secrets are not permitted outside of development.",
+            )
+            raise RuntimeError(
+                f"Insecure configuration: {', '.join(insecure_secrets)} are using default values. "
+                "You must provide unique, secure secrets for non-development environments."
+            )
+
     app = FastAPI(
         title="API Management Portal",
         description="Human user & token management for the API gateway",
