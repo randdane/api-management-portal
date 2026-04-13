@@ -163,6 +163,12 @@ Requests outside a ±30-second window are rejected. The shared secret is `GATEWA
 - **Session cookies:** `HttpOnly`, `SameSite=Lax`, `Secure` in production.
 - **Audit log:** Every user, token, and vendor mutation is recorded with actor, IP, and a JSONB details payload. Logs are append-only (no update/delete routes).
 
+### Secrets Rotation
+
+- **`SECRET_KEY`**: Rotating this key invalidates all active sessions. Users will be logged out and must log in again.
+- **`GATEWAY_PORTAL_SHARED_SECRET`**: This must be updated in tandem on both the Portal and the Gateway. Coordinated restart or environment update is required.
+- **`GATEWAY_SERVICE_JWT`**: To rotate, generate a new service account JWT on the Gateway and update the `GATEWAY_SERVICE_JWT` environment variable on the Portal.
+
 ---
 
 ## Project Structure
