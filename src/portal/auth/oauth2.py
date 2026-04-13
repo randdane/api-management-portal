@@ -103,7 +103,15 @@ async def find_or_create_oauth_user(
 
     The partial unique index on (oauth_provider, oauth_subject) ensures
     a given external identity maps to exactly one local user.
+
+    If the IdP email matches a *local* (password-based) account that has not
+    yet been linked to this OAuth identity, the login is rejected with 409.
+    This prevents silent account duplication and the privilege-escalation
+    scenario where an admin's local account would be shadowed by a new
+    low-privilege OAuth account.  The user must instead log in with their
+    password and explicitly link the external identity from their profile.
     """
+    # 1. Look up by OAuth identity (happy path for returning OAuth users).
     stmt = select(User).where(
         User.oauth_provider == provider,
         User.oauth_subject == subject,
@@ -119,7 +127,23 @@ async def find_or_create_oauth_user(
             )
         return user
 
-    # Create new user — derive a unique username if taken
+    # 2. Guard: block if the email already belongs to a local account.
+    #    A local account is one without an OAuth identity attached yet.
+    if email:
+        email_stmt = select(User).where(User.email == email)
+        existing_by_email = (await db.execute(email_stmt)).scalar_one_or_none()
+        if existing_by_email is not None:
+            logger.warning(
+                "oauth2.email_conflict",
+                provider=provider,
+                subject_hash=hashlib.sha256(subject.encode()).hexdigest()[:8],
+            )
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="email_already_registered",
+            )
+
+    # 3. Create new user — derive a unique username if taken.
     base_username = username or email.split("@")[0]
     candidate = base_username
     for suffix in range(1, 100):

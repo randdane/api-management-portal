@@ -59,8 +59,19 @@ async def callback(
 ):
     _require_configured()
 
+    def _clear_state(resp: RedirectResponse) -> RedirectResponse:
+        """Remove the state cookie from any response (error or success)."""
+        resp.delete_cookie(
+            _STATE_COOKIE,
+            path="/",
+            httponly=True,
+            secure=settings.require_https,
+            samesite="lax",
+        )
+        return resp
+
     if error:
-        return RedirectResponse(f"/login?error={error}", status_code=302)
+        return _clear_state(RedirectResponse(f"/login?error={error}", status_code=302))
 
     # Verify state to prevent CSRF on the callback
     cookie_state = request.cookies.get(_STATE_COOKIE)
@@ -88,6 +99,13 @@ async def callback(
     email = userinfo.get("email", "")
     username = userinfo.get("preferred_username", "") or userinfo.get("name", "")
 
+    # Validate that the IdP returned the minimum required claims.
+    if not subject or not email:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="oauth2_missing_claims",
+        )
+
     user = await oauth2_lib.find_or_create_oauth_user(
         db, provider=provider, subject=subject, email=email, username=username
     )
@@ -106,7 +124,13 @@ async def callback(
     await db.commit()
 
     redirect = RedirectResponse("/", status_code=302)
-    redirect.delete_cookie(_STATE_COOKIE, path="/")
+    redirect.delete_cookie(
+        _STATE_COOKIE,
+        path="/",
+        httponly=True,
+        secure=settings.require_https,
+        samesite="lax",
+    )
     redirect.set_cookie(
         key=settings.session_cookie_name,
         value=session_token,
