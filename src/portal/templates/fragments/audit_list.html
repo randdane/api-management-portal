@@ -22,7 +22,13 @@
           {% endif %}
         </td>
         <td class="text-muted text-sm">
-          {% if log.user_id %}{{ log.user_id | string | truncate(8, False, '') }}…{% else %}system{% endif %}
+          {% if log.user %}
+            {{ log.user.username }}
+          {% elif log.user_id %}
+            {{ log.user_id | string | truncate(8, False, '') }}…
+          {% else %}
+            system
+          {% endif %}
         </td>
         <td class="text-muted text-sm">{{ log.ip_address or '—' }}</td>
         <td class="text-muted text-sm">{{ log.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</td>
