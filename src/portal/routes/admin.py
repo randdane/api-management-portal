@@ -10,12 +10,13 @@ from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
-from sqlalchemy import select
+from sqlalchemy import delete, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import joinedload
 
 from portal.auth.dependencies import get_current_user, require_admin
 from portal.auth.passwords import hash_password
-from portal.db.models import AuditLog, User
+from portal.db.models import ApiToken, AuditLog, Session, User
 from portal.db.session import get_db
 from portal.services.audit import log_action
 from portal.sse import is_datastar_request, merge_fragments
@@ -38,7 +39,7 @@ async def users_page(
     if is_datastar_request(request):
         html = templates.get_template("fragments/user_list.html").render(ctx)
         return merge_fragments(f'<div id="user-list">{html}</div>')
-    return templates.TemplateResponse("admin_users.html", ctx)
+    return templates.TemplateResponse(request=request, name="admin_users.html", context=ctx)
 
 
 @router.get("/admin/audit-logs")
@@ -53,7 +54,7 @@ async def audit_logs_page(
     if is_datastar_request(request):
         html = templates.get_template("fragments/audit_list.html").render(ctx)
         return merge_fragments(html)
-    return templates.TemplateResponse("admin_audit.html", ctx)
+    return templates.TemplateResponse(request=request, name="admin_audit.html", context=ctx)
 
 
 # ── User management API ────────────────────────────────────────────────────
@@ -187,6 +188,14 @@ async def update_user_api(
     if payload.is_active is not None:
         target.is_active = payload.is_active
         changes["is_active"] = payload.is_active
+        if payload.is_active is False:
+            # Immediate revocation of all access.
+            await db.execute(delete(Session).where(Session.user_id == target.id))
+            await db.execute(
+                update(ApiToken)
+                .where(ApiToken.user_id == target.id)
+                .values(is_revoked=True)
+            )
 
     ip = request.client.host if request.client else None
     await log_action(
@@ -227,6 +236,12 @@ async def deactivate_user_api(
         )
 
     target.is_active = False
+    # Immediate revocation of all access.
+    await db.execute(delete(Session).where(Session.user_id == target.id))
+    await db.execute(
+        update(ApiToken).where(ApiToken.user_id == target.id).values(is_revoked=True)
+    )
+
     ip = request.client.host if request.client else None
     await log_action(
         db,
@@ -368,7 +383,12 @@ async def _query_audit_logs(
     action_filter: str | None = None,
     limit: int = 100,
 ) -> list[AuditLog]:
-    stmt = select(AuditLog).order_by(AuditLog.created_at.desc()).limit(limit)
+    stmt = (
+        select(AuditLog)
+        .options(joinedload(AuditLog.user))
+        .order_by(AuditLog.created_at.desc())
+        .limit(limit)
+    )
     if action_filter:
         stmt = stmt.where(AuditLog.action.ilike(f"%{action_filter}%"))
     result = await db.execute(stmt)

@@ -119,6 +119,9 @@ async def logout(
     delete_cookie_kwargs = {
         "key": settings.session_cookie_name,
         "path": "/",
+        "httponly": True,
+        "secure": settings.require_https,
+        "samesite": "lax",
     }
 
     from portal.sse import is_datastar_request, merge_signals
