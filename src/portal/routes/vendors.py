@@ -60,11 +60,16 @@ async def vendors_page(
 ):
     gw = _get_gateway_client(request)
     vendors = await gw.list_vendors()
+    if vendors is None:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="gateway_error",
+        )
     ctx = {"request": request, "user": user, "vendors": vendors}
     if is_datastar_request(request):
         html = templates.get_template("fragments/vendor_list.html").render(ctx)
         return merge_fragments(f'<div id="vendor-list">{html}</div>')
-    return templates.TemplateResponse("vendors.html", ctx)
+    return templates.TemplateResponse(request=request, name="vendors.html", context=ctx)
 
 
 @router.get("/admin/vendors")
@@ -74,11 +79,16 @@ async def admin_vendors_page(
 ):
     gw = _get_gateway_client(request)
     vendors = await gw.list_vendors()
+    if vendors is None:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="gateway_error",
+        )
     ctx = {"request": request, "user": admin, "vendors": vendors}
     if is_datastar_request(request):
         html = templates.get_template("fragments/admin_vendor_list.html").render(ctx)
         return merge_fragments(f'<div id="vendor-admin-list">{html}</div>')
-    return templates.TemplateResponse("admin_vendors.html", ctx)
+    return templates.TemplateResponse(request=request, name="admin_vendors.html", context=ctx)
 
 
 @router.get("/vendors/{vendor_id}")
@@ -98,7 +108,7 @@ async def vendor_detail_page(
         "vendor": vendor,
         "quota": quota or {},
     }
-    return templates.TemplateResponse("vendor_detail.html", ctx)
+    return templates.TemplateResponse(request=request, name="vendor_detail.html", context=ctx)
 
 
 # ── API (proxy) ────────────────────────────────────────────────────────────
@@ -110,7 +120,13 @@ async def list_vendors_api(
     user: User = Depends(get_current_user),
 ) -> list:
     gw = _get_gateway_client(request)
-    return await gw.list_vendors()
+    vendors = await gw.list_vendors()
+    if vendors is None:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="gateway_error",
+        )
+    return vendors
 
 
 @router.get("/api/vendors/{vendor_id}")

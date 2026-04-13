@@ -66,10 +66,10 @@ class GatewayClient:
 
     # ── Vendor catalog ─────────────────────────────────────────────────
 
-    async def list_vendors(self) -> list:
+    async def list_vendors(self) -> list | None:
         result = await self._get("/admin/vendors")
         if result is None:
-            return []
+            return None
         # Gateway returns list directly or wrapped in {"vendors": [...]}
         if isinstance(result, list):
             return result
